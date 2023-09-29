@@ -92,9 +92,21 @@ struct editorConfig E;
 /*** filetypes ***/
 
 char *C_HL_extensions[] = { ".c", ".h", ".cpp", NULL};
+char *Python_HL_extensions[] = { ".py", NULL};
 char *C_HL_keywords[] = {
-    "switch", "if", "while", "for", "break", "continue", "return", "else", "struct", "union", "typedef", "static", "enum", "class", "case"
+    "switch", "if", "while", "for", "break", "continue", "return", "else", "struct", "union", "typedef", "static", "enum", "class", "case",
     "int|", "long|", "double|", "float|", "char|", "unsigned|", "signed|", "void|", NULL
+};
+char *Python_HL_keywords[] = {
+    "and", "as", "assert", "break", "class", "continue", "def", "del", "elif", "else", "except", "False", "finally", "for", "from",
+    "global", "if", "import", "in", "is", "lambda", "None", "nonlocal", "not", "or", "pass", "raise", "return", "True", "try", "while", "with", "yield",
+    "abs|", "aiter|", "all|", "anext|", "any|", "ascii|", "bin|", "bool|", "breakpoint|", "bytearray|", "bytes|", "callable|", "chr|",
+    "classmethod|", "compile|", "complex|", "delattr|", "dict|", "dir|", "divmod|", "enumerate|", "eval|", "exec|", "filter|", "float|",
+    "format|", "frozenset|", "getattr|", "globals|", "hasattr|", "hash|", "help|", "hex|", "id|", "input|", "int|",
+    "isinstance|", "issubclass|", "iter|", "len|", "list|", "locals|", "map|", "max|", "memoryview|", "min|", 
+    "next|", "object|", "oct|", "open|", "ord|", "pow|", "print|", "property|", "range|", "repr|", "reversed|", 
+    "round|", "set|", "setattr|", "slice|", "sorted|", "staticmethod|", "str|", "sum|", "super|", "tuple|", 
+    "type|", "vars|", "zip|", "__import__|", NULL
 };
 
 struct editorSyntax HLDB[] = {
@@ -105,6 +117,14 @@ struct editorSyntax HLDB[] = {
         "//","/*", "*/",
         HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS
     },
+    { 
+        "py",
+        Python_HL_extensions,
+        Python_HL_keywords,
+        "#", "'''", "'''",
+        HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS
+    
+    }
 };
 
 #define HLDB_ENTRIES (sizeof(HLDB) / sizeof(HLDB[0]))
