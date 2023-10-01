@@ -14,7 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/*** source: https://viewsourcecode.org/snaptoken/kilo/05.aTextEditor.html#backspacing-at-the-start-of-a-line ***/
+/*** source: https://viewsourcecode.org/snaptoken/kilo/ ***/
 
 /*** defines ***/
 #define USELESS_VERSION "0.0.1"
@@ -47,6 +47,18 @@ enum editorHighlight {
 
 #define HL_HIGHLIGHT_NUMBERS (1<<0)
 #define HL_HIGHLIGHT_STRINGS (1<<1)
+
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  ((byte) & 0x80 ? '1' : '0'), \
+  ((byte) & 0x40 ? '1' : '0'), \
+  ((byte) & 0x20 ? '1' : '0'), \
+  ((byte) & 0x10 ? '1' : '0'), \
+  ((byte) & 0x08 ? '1' : '0'), \
+  ((byte) & 0x04 ? '1' : '0'), \
+  ((byte) & 0x02 ? '1' : '0'), \
+  ((byte) & 0x01 ? '1' : '0') 
+
 
 /*** data ***/
 
@@ -93,6 +105,7 @@ struct editorConfig E;
 
 char *C_HL_extensions[] = { ".c", ".h", ".cpp", NULL};
 char *Python_HL_extensions[] = { ".py", NULL};
+char *TXT_HL_extensions[] = {".txt", ".text", "", NULL};
 char *C_HL_keywords[] = {
     "switch", "if", "while", "for", "break", "continue", "return", "else", "struct", "union", "typedef", "static", "enum", "class", "case",
     "int|", "long|", "double|", "float|", "char|", "unsigned|", "signed|", "void|", NULL
@@ -108,6 +121,8 @@ char *Python_HL_keywords[] = {
     "round|", "set|", "setattr|", "slice|", "sorted|", "staticmethod|", "str|", "sum|", "super|", "tuple|", 
     "type|", "vars|", "zip|", "__import__|", NULL
 };
+char *TXT_HL_keywords[] = {NULL};
+
 
 struct editorSyntax HLDB[] = {
     {
@@ -124,6 +139,13 @@ struct editorSyntax HLDB[] = {
         "#", "'''", "'''",
         HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS
     
+    },
+    {
+        "txt",
+        TXT_HL_extensions, 
+        TXT_HL_keywords,
+        "#", " /*", "*/",
+        HL_HIGHLIGHT_NUMBERS
     }
 };
 
@@ -315,7 +337,7 @@ void editorUpdateSyntax(erow *row){
             }
         }
 
-        if(E.syntax -> flags && HL_HIGHLIGHT_STRINGS){
+        if(E.syntax -> flags & HL_HIGHLIGHT_STRINGS){
             if(in_string){
                 row -> hl[i] = HL_STRING;
                 if(c=='\\' && i+1 < row->rsize){
@@ -337,7 +359,7 @@ void editorUpdateSyntax(erow *row){
                 }
             }
         }
-        if(E.syntax -> flags && HL_HIGHLIGHT_NUMBERS){
+        if(E.syntax -> flags & HL_HIGHLIGHT_NUMBERS){
             if((isdigit(c) && (prev_sep || prev_hl == HL_NUMBER)) || (c == '.' && prev_hl == HL_NUMBER)) {
                 row->hl[i] = HL_NUMBER;
                 i++;
@@ -623,8 +645,8 @@ void editorOpen(char *filename) {
     E.dirty = 0;
 }
 
-void editorSave(){
-    if(E.filename == NULL) {
+void editorSave(int saveAs){
+    if(E.filename == NULL || saveAs) {
         E.filename = editorPrompt("Save as: %s", NULL);
         if(E.filename == NULL){
             editorSetStatusMessage("Save aborted");
@@ -841,7 +863,10 @@ void editorDrawStatusBar(struct abuf *ab){
     abAppend(ab, "\x1b[7m", 4);
     char status[80], rstatus[80];
     int len = snprintf(status, sizeof(status), "%.20s - %d lines %s", E.filename ? E.filename : "[No Name]", E.numrows, E.dirty ? "(modified)" : "");
-    int rlen = snprintf(rstatus, sizeof(rstatus), " %s | %d/%d", E.syntax ? E.syntax->filetype : "no ft",  E.cy + 1, E.numrows);
+    int rlen = snprintf(rstatus, sizeof(rstatus),
+        " %s | %d/%d", 
+        E.syntax ? E.syntax->filetype : "no ft",  
+        E.cy + 1, E.numrows);
     if(len > E.screencols) len = E.screencols;
     abAppend(ab, status, len);
     while (len < E.screencols){
@@ -989,7 +1014,10 @@ void editorProcessKeypress(){
             break;
 
         case CTRL_KEY('s'):
-            editorSave();
+            editorSave(0);
+            break;
+        case CTRL_KEY('a'):
+            editorSave(1);
             break;
         case HOME_KEY:
             E.cx = 0;
@@ -1066,7 +1094,7 @@ int main (int argc, char *argv[]) {
     if(argc >= 2)
         editorOpen(argv[1]);
 
-    editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-F = find | Ctrl-Q = quit");
+    editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-A = save as | Ctrl-F = find | Ctrl-Q = quit");
 
     while (1){
         editorRefreshScreen();
