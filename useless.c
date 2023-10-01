@@ -31,7 +31,11 @@ enum editorKey {
     HOME_KEY,
     END_KEY,
     PAGE_UP,
-    PAGE_DOWN
+    PAGE_DOWN,
+    A_UML,
+    O_UML,
+    U_UML,
+    S_Z
 };
 
 enum editorHighlight {
@@ -235,8 +239,24 @@ int editorReadKey(){
                 case 'F': return END_KEY;
             }
         }
-
         return '\x1b';
+    }
+    if(c == '\xc3'){
+        char val;
+        if(read(STDIN_FILENO, &val, 1) != 1) return '\xc3';
+
+        if(val == '\xa4'){
+            return A_UML;
+        }
+        else if(val == '\xb6'){
+            return O_UML;
+        }
+        else if(val == '\xbc'){
+            return U_UML;
+        }
+        else if(val == '\x9f'){
+            return S_Z;
+        }
     }
     return c;
 }
@@ -529,6 +549,7 @@ void editorDelRow(int at){
 }
 
 void editorRowInsertChar(erow *row, int at, int c){
+    
     if(at < 0 || at > row->size) at = row->size;
     row->chars = realloc(row->chars, row->size + 2);
     memmove(&row->chars[at + 1], &row->chars[at], row->size - at + 1);
@@ -1061,6 +1082,22 @@ void editorProcessKeypress(){
             break;
         case CTRL_KEY('l'):
         case '\x1b':
+            break;
+        case A_UML:
+            editorInsertChar('a');
+            editorInsertChar('e');
+            break;
+        case U_UML:
+            editorInsertChar('u');
+            editorInsertChar('e');
+            break;
+        case O_UML:
+            editorInsertChar('o');
+            editorInsertChar('e');
+            break;
+        case S_Z:
+            editorInsertChar('s');
+            editorInsertChar('s');
             break;
         default: 
             editorInsertChar(c);
